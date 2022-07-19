@@ -1,0 +1,73 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    s1: "Abc,Efg"
+    vm_index: 1
+
+    lines:
+    - "\u001b[36mINFO\u001b[0m[2022-07-16 02:10:01] Quay is available at https://quay.example.opentlc.com:8443 with credentials (init, Pp2i6s8qb9cvU5DeVd7u4GMCj3W0F1KB) "
+
+  tasks:
+  - name: fist is ansible method. 2nd is python method
+    set_fact:
+      list_01: "{{ s1 | lower | split(',') }}"
+      list_02: "{{ s1.upper().split(',') }}"
+
+  - debug:
+      msg: "{{ item }}"
+    loop: 
+    - "{{ list_01 }}"
+    - "{{ list_02 }}"
+
+  - name: "Mixed.\" ... is defined\" is ansible method.\n
+                 \"if ... else ...\" is python method"
+    set_fact:
+      env_code: "{{ env_dd[:3] if env_dd is defined else 'env_' }}"
+      app_code: "{{ app_dd[:3] if app_dd is defined else 'app_' }}"
+      class_code: "{{ class_dd[:3] if class_dd is defined else 'class_' }}"
+  
+  - name: "\"'%03d' % vm_index\" Python method"
+    set_fact:
+      vm_name: "{{ (env_code + env_code + class_code +
+        app_code)|lower }}{{ '%03d' % vm_index|int }}"
+
+  - debug:
+      msg: "{{ vm_name }}"
+
+#- name: Set quay credentail parms' value
+#  set_fact:
+#    quay_user: init
+#    quay_pwd: "{{ quay_install_result.stdout_lines[-1] | regex_replace('^.*init\\,\\s+(.*)\\)\\s+.*$', '\\1') }}"
+#
+
+#- name: Extract Password from the installation log
+#  register: result
+#  args:
+#    stdin: |
+#      import re
+#      search_pattern = search_pattern = "^wrote\s+mirroring\s+manifests\s+to\s+(.+?)$"
+#      for line in {{ result.stdout_lines }}:
+#        if re.search(search_pattern, line):
+#          f = re.search(search_pattern, line).group(1).strip()
+#          print(f)
+#  command: /usr/bin/python3
+#
+#- debug:
+#    msg: "{{ result.stdout }}"
+
+  - name: pure python code
+    register: results
+    args:
+      stdin: |
+        import re
+        s = "wrote mirroring manifests to manifests-storage-operator-index-1657968071"
+        search_pattern = search_pattern = "^wrote\s+mirroring\s+manifests\s+to\s+(.+?)$"
+        if re.search(search_pattern, s):
+            f = re.search(search_pattern, s).group(1).strip()
+            print(f)     
+    command: /usr/bin/python3
+  - debug:
+      msg: "{{ results.stdout }}"
+
